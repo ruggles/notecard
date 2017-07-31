@@ -1,0 +1,18 @@
+
+
+// TODO Build in specific interactions, with placeholders for DB operations
+
+Add Search to Deck Action Bar
+
+Add Shuffle to Card Action Bar
+
+Flip card method
+
+// TODO Fill in database specific functionality
+
+// TODO At this point, save a version of this app for posterity
+
+
+// TODO Read material design guidelines
+
+    Compare app to guidelines, take notes, make changes when appropriate

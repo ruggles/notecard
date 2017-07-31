@@ -62,7 +62,7 @@ public class DeckActivity extends AppCompatActivity {
         deckList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                toCardActivity();
+                toCardActivity(id);
             }
         });
 
@@ -70,7 +70,7 @@ public class DeckActivity extends AppCompatActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 
-                deckEditMenu();
+                deckEditMenu(id);
 
                 //Returning true means the long click consumes the event
                 //Such that a regular click wont be triggered immediately after
@@ -94,8 +94,10 @@ public class DeckActivity extends AppCompatActivity {
     }
 
 
-    public void toCardActivity(){
+    public void toCardActivity(long deckID){
         Intent cardIntent = new Intent(this, CardActivity.class);
+        cardIntent.putExtra(MySQLiteHelper.DECK_COLNAME_ID, deckID);
+        // TODO INSERT CODE ALLOWING ACTIVITY TO RECIEVE EXTRA
         startActivity(cardIntent);
     }
 
@@ -127,26 +129,29 @@ public class DeckActivity extends AppCompatActivity {
 
     }
 
-    private void deckEditMenu() {
+    private void deckEditMenu(long id) {
 
         LayoutInflater myInflater = LayoutInflater.from(this);
         View dialogView = myInflater.inflate(R.layout.menu_deck_edit, null);
+        ArrayList<String> deckList = getDeckList();
+        final String deckName = deckList.get((int)id);
+        final DeckTextWrapper wrapper = new DeckTextWrapper(dialogView);
 
         new AlertDialog.Builder(this)
-                .setTitle("Modify Deck?") // TODO ADD DECK NAME TO TITLE
+                .setTitle("Rename Deck?")
                 .setView(dialogView)
                 .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        deleteDeck();
+                        deleteDeck(deckName);
                     }
                 })
-                .setNegativeButton("Modify", new DialogInterface.OnClickListener() {
+                .setNegativeButton("Rename", new DialogInterface.OnClickListener() {
 
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        modifyDeck();
+                        renameDeck(deckName, wrapper);
                     }
                 })
                 .setNeutralButton("Cancel", new DialogInterface.OnClickListener() {
@@ -158,7 +163,7 @@ public class DeckActivity extends AppCompatActivity {
                 .show();
     }
 
-    // DECK MODIFICATION FUNCTION - DATABASE STUFF HAPPENING HERE.
+    // DECK MODIFICATION FUNCTIONs - DATABASE STUFF HAPPENING HERE.
 
     public ArrayList getDeckList() {
         ArrayList<String> deckList = new ArrayList<>();
@@ -192,18 +197,11 @@ public class DeckActivity extends AppCompatActivity {
 
     private void addDeck(DeckTextWrapper wrapper) {
 
-        //Log.d(TAG, wrapper.getName());
-        ArrayList<String> deckList = getDeckList();
-        for (int i=0; i< deckList.size(); i++) {
-            //Log.d(TAG, deckList.get(i));
-            if (wrapper.getName().equals(deckList.get(i))) {
-                //Log.d(TAG, "WE HAVE A DUPE GENTLEMEN");
-                Toast.makeText(getApplicationContext(), "Deck has same name as previous deck",
-                        Toast.LENGTH_SHORT).show();
-                return;
-            }
+        if (duplicateName(wrapper.getName())) {
+            Toast.makeText(getApplicationContext(), "Deck has same name as previous deck",
+                    Toast.LENGTH_SHORT).show();
+            return;
         }
-
 
         ContentValues myValues = new ContentValues(1);
 
@@ -214,12 +212,41 @@ public class DeckActivity extends AppCompatActivity {
         updateDecks();
     }
 
-    private void deleteDeck() {
-        //TODO add deleteDeck once we have data functionality
+    private void deleteDeck(String deckName) {
+        //Log.d(TAG, deckName);
+
+        myDB.delete(MySQLiteHelper.DECK_TABLE_NAME, MySQLiteHelper.DECK_COLNAME_DECKNAME + "=?",
+                new String[]{deckName});
+
+        updateDecks();
     }
 
-    private void modifyDeck() {
-        //TODO add modifyDeck once we have data
+    private void renameDeck(String deckName, DeckTextWrapper wrapper) {
+
+        if (duplicateName(wrapper.getName())) {
+            Toast.makeText(getApplicationContext(), "Deck has same name as previous deck",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        ContentValues myValues = new ContentValues(1);
+
+        myValues.put(MySQLiteHelper.DECK_COLNAME_DECKNAME, wrapper.getName());
+
+        myDB.update(MySQLiteHelper.DECK_TABLE_NAME, myValues,
+                MySQLiteHelper.DECK_COLNAME_DECKNAME + "=?", new String[]{deckName});
+
+        updateDecks();
+    }
+
+    private boolean duplicateName(String newName) {
+        ArrayList<String> deckList = getDeckList();
+        for (int i=0; i< deckList.size(); i++) {
+            if (newName.equals(deckList.get(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

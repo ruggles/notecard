@@ -2,11 +2,14 @@ package ruggles.notecard;
 
 import android.app.Dialog;
 import android.content.DialogInterface;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.AdapterView;
@@ -14,9 +17,19 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+
 public class CardActivity extends AppCompatActivity {
 
     private String[] placeholderCards = {"Alpha", "Omega", "Theta"};
+
+    private static final String TAG = CardActivity.class.getSimpleName();
+
+    private SQLiteDatabase myDB;
+    private MySQLiteHelper myDBHelper;
+
+    private ListView cardList;
+    private Deck cardDeck;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,14 +38,24 @@ public class CardActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        ListView cardList = (ListView) findViewById(R.id.card_list);
-        cardList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
-                placeholderCards));
+
+        myDBHelper = new MySQLiteHelper(this);
+        myDB = myDBHelper.getWritableDatabase();
+        //Log.d(TAG, myDB.toString());
+
+        long deckID = getIntent().getExtras().getLong(MySQLiteHelper.DECK_COLNAME_ID);
+        Log.d(TAG, Long.toString(deckID));
+
+        cardList = (ListView) findViewById(R.id.card_list);
+        cardDeck = buildDeck(deckID);
+        updateCards();
+
+        //Log.d(TAG, cardDeck.getCards()[1]);
 
         cardList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                flipCard();
+                flipCard(id);
             }
         });
 
@@ -113,6 +136,35 @@ public class CardActivity extends AppCompatActivity {
                 .show();
     }
 
+    private void updateCards() {
+        cardList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
+                cardDeck.getCards()));
+    }
+
+    private Deck buildDeck(long deckID) {
+        ArrayList<String> cardFronts = new ArrayList<>();
+        ArrayList<String> cardBacks = new ArrayList<>();
+
+        Cursor cursor = myDB.query(MySQLiteHelper.CARD_TABLE_NAME,
+                MySQLiteHelper.CARD_COLUMNS,
+                MySQLiteHelper.CARD_COLNAME_DECK_ID + "=?", new String[]{Long.toString(deckID)},
+                null, null, null);
+
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            String Front = cursor.getString(2);
+            cardFronts.add(Front);
+            String Back = cursor.getString(3);
+            cardBacks.add(Back);
+            cursor.moveToNext();
+        }
+
+        cursor.close();
+
+        return new Deck(cardFronts.toArray(new String[cardFronts.size()]),
+                cardBacks.toArray(new String[cardBacks.size()]));
+    }
+
     private void addCard() {
         // TODO Fill in add card after data is complete
     }
@@ -125,12 +177,12 @@ public class CardActivity extends AppCompatActivity {
         //TODO Finish deleteCard once data model is complete
     }
 
-    private void flipCard() {
+    private void flipCard(long cardPos) {
 
         Toast.makeText(getApplicationContext(), "flipCard() has been triggered",
                 Toast.LENGTH_SHORT).show();
-
-        // TODO Add card flip function
+        cardDeck.flip((int) cardPos);
+        updateCards();
     }
 
 }
