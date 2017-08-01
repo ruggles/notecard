@@ -19,7 +19,7 @@
             android:text="Card Front:" />
 
         <EditText
-            android:id="@+id/editText"
+            android:id="@+id/frontEdit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -43,7 +43,7 @@
             android:text="Card Back" />
 
         <EditText
-            android:id="@+id/editText2"
+            android:id="@+id/backEdit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"

@@ -11,11 +11,12 @@ package ruggles.notecard;
 
 public class Deck {
 
-    private String[] cardFront, cardBack;
+    private String[] cardFront, cardBack, frontArchive;
 
     Deck(String[] cardFront, String[] cardBack)
     {
         this.cardFront = cardFront;
+        this.frontArchive = cardFront;
         this.cardBack = cardBack;
         shuffle(); //unimplemented
     }
@@ -27,6 +28,14 @@ public class Deck {
         cardBack[cardPos] = placeholder;
     }
 
+    // Check to see if a card front exists to avoid dupes
+    boolean doesExist(String cardFront) {
+        for (String existingFront: frontArchive)
+            if (cardFront.equals(existingFront))
+                return true;
+        return false;
+    }
+
     void shuffle()
     {
         //TODO IMPLEMENT CARD SHUFFLING
@@ -34,5 +43,9 @@ public class Deck {
 
     String[] getCards() {
         return cardFront;
+    }
+
+    String getcardFront(long id) {
+        return frontArchive[(int) id];
     }
 }

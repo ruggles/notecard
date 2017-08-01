@@ -1,6 +1,7 @@
 package ruggles.notecard;
 
 import android.app.Dialog;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -30,6 +31,7 @@ public class CardActivity extends AppCompatActivity {
 
     private ListView cardList;
     private Deck cardDeck;
+    private long deckID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,10 +45,11 @@ public class CardActivity extends AppCompatActivity {
         myDB = myDBHelper.getWritableDatabase();
         //Log.d(TAG, myDB.toString());
 
-        long deckID = getIntent().getExtras().getLong(MySQLiteHelper.DECK_COLNAME_ID);
-        Log.d(TAG, Long.toString(deckID));
+        deckID = getIntent().getExtras().getLong(MySQLiteHelper.DECK_COLNAME_ID);
+        //Log.d(TAG, Long.toString(deckID));
 
         cardList = (ListView) findViewById(R.id.card_list);
+
         cardDeck = buildDeck(deckID);
         updateCards();
 
@@ -63,7 +66,7 @@ public class CardActivity extends AppCompatActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 
-                editCardMenu();
+                editCardMenu(id);
                 return true;
             }
         });
@@ -84,6 +87,7 @@ public class CardActivity extends AppCompatActivity {
 
         LayoutInflater myInflater = LayoutInflater.from(this);
         View dialogView = myInflater.inflate(R.layout.menu_card_edit, null);
+        final CardTextWrapper wrapper = new CardTextWrapper(dialogView);
 
         new AlertDialog.Builder(this)
                 .setTitle("Add Card")
@@ -91,7 +95,7 @@ public class CardActivity extends AppCompatActivity {
                 .setPositiveButton("Add", new Dialog.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        addCard();
+                        addCard(wrapper);
                     }
                 })
                 .setNeutralButton("Cancel", new Dialog.OnClickListener() {
@@ -102,13 +106,14 @@ public class CardActivity extends AppCompatActivity {
                 })
                 .show();
 
-        // TODO Create dialog including menu_card_add.xml
     }
 
-    private void editCardMenu() {
+    private void editCardMenu(long id) {
 
         LayoutInflater myInflater = LayoutInflater.from(this);
         View dialogView = myInflater.inflate(R.layout.menu_card_edit, null);
+        final CardTextWrapper wrapper = new CardTextWrapper(dialogView);
+        final String cardName = cardDeck.getcardFront(id);
 
         new AlertDialog.Builder(this)
                 .setTitle("Edit Card")
@@ -116,7 +121,7 @@ public class CardActivity extends AppCompatActivity {
                 .setPositiveButton("Delete", new Dialog.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        deleteCard();
+                        deleteCard(cardName);
                     }
                 })
                 .setNeutralButton("Cancel", new Dialog.OnClickListener() {
@@ -130,7 +135,7 @@ public class CardActivity extends AppCompatActivity {
                 .setNegativeButton("Modify", new Dialog.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        editCard();
+                        editCard(cardName, wrapper);
                     }
                 })
                 .show();
@@ -165,22 +170,64 @@ public class CardActivity extends AppCompatActivity {
                 cardBacks.toArray(new String[cardBacks.size()]));
     }
 
-    private void addCard() {
-        // TODO Fill in add card after data is complete
+    private void addCard(CardTextWrapper wrapper) {
+
+        String front = wrapper.getFront();
+        String back = wrapper.getBack();
+
+        if (cardDeck.doesExist(front)) {
+            Toast.makeText(getApplicationContext(), "Card already exists", Toast.LENGTH_SHORT)
+                        .show();
+            return;
+        }
+
+        ContentValues myValues = new ContentValues(3);
+
+        myValues.put(MySQLiteHelper.CARD_COLNAME_DECK_ID, Long.toString(deckID));
+        myValues.put(MySQLiteHelper.CARD_COLNAME_FRONT, front);
+        myValues.put(MySQLiteHelper.CARD_COLNAME_BACK, back);
+
+        myDB.insert(MySQLiteHelper.CARD_TABLE_NAME, MySQLiteHelper.CARD_COLNAME_ID, myValues);
+
+        cardDeck = buildDeck(deckID);
+        updateCards();
     }
 
-    private void editCard() {
-        //TODO Finish editCard once data is complete
-    }
+    private void deleteCard(String card) {
 
-    private void deleteCard() {
+        myDB.delete(MySQLiteHelper.CARD_TABLE_NAME, MySQLiteHelper.CARD_COLNAME_FRONT + "=?",
+                new String[]{card});
+
+        cardDeck = buildDeck(deckID);
+        updateCards();
         //TODO Finish deleteCard once data model is complete
+    }
+
+    private void editCard(String card, CardTextWrapper wrapper) {
+
+        String front = wrapper.getFront();
+        String back = wrapper.getBack();
+
+        if ((!card.equals(front)) && cardDeck.doesExist(front)) {
+            Toast.makeText(getApplicationContext(), "Card already exists", Toast.LENGTH_SHORT)
+                    .show();
+            return;
+        }
+
+        ContentValues myValues = new ContentValues(2);
+        myValues.put(MySQLiteHelper.CARD_COLNAME_FRONT, front);
+        myValues.put(MySQLiteHelper.CARD_COLNAME_BACK, back);
+
+        myDB.update(MySQLiteHelper.CARD_TABLE_NAME, myValues,
+                MySQLiteHelper.CARD_COLNAME_FRONT + "=?",
+                new String[] {card});
+
+        cardDeck = buildDeck(deckID);
+        updateCards();
     }
 
     private void flipCard(long cardPos) {
 
-        Toast.makeText(getApplicationContext(), "flipCard() has been triggered",
-                Toast.LENGTH_SHORT).show();
         cardDeck.flip((int) cardPos);
         updateCards();
     }
