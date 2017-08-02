@@ -1,8 +1,5 @@
 
-
 // TODO Add Search to Deck Action Bar
-
-// TODO Add Shuffle to Card Action Bar
 
 // TODO At this point, save a version of this app for posterity
 

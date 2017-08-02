@@ -12,6 +12,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -37,9 +39,6 @@ public class CardActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_card);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
 
         myDBHelper = new MySQLiteHelper(this);
         myDB = myDBHelper.getWritableDatabase();
@@ -47,6 +46,13 @@ public class CardActivity extends AppCompatActivity {
 
         deckID = getIntent().getExtras().getLong(MySQLiteHelper.DECK_COLNAME_ID);
         //Log.d(TAG, Long.toString(deckID));
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle(getDeckName(deckID));
+        setSupportActionBar(toolbar);
+
+
+
 
         cardList = (ListView) findViewById(R.id.card_list);
 
@@ -79,6 +85,9 @@ public class CardActivity extends AppCompatActivity {
             }
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        Log.d(TAG, getDeckName(deckID));
+        Log.d(TAG, Long.toString(deckID));
     }
 
     //
@@ -146,13 +155,30 @@ public class CardActivity extends AppCompatActivity {
                 cardDeck.getCards()));
     }
 
+    private String getDeckName(long deckID) {
+        String deckName;
+
+        Cursor myCursor = myDB.query(MySQLiteHelper.DECK_TABLE_NAME,
+                new String[] {MySQLiteHelper.DECK_COLNAME_DECKNAME},
+                MySQLiteHelper.DECK_COLNAME_ID + "=?",
+                new String[] {Long.toString(deckID)},
+                null, null, null);
+
+        myCursor.moveToFirst();
+
+        deckName = myCursor.getString(0);
+
+        return deckName;
+    }
+
     private Deck buildDeck(long deckID) {
         ArrayList<String> cardFronts = new ArrayList<>();
         ArrayList<String> cardBacks = new ArrayList<>();
 
         Cursor cursor = myDB.query(MySQLiteHelper.CARD_TABLE_NAME,
                 MySQLiteHelper.CARD_COLUMNS,
-                MySQLiteHelper.CARD_COLNAME_DECK_ID + "=?", new String[]{Long.toString(deckID)},
+                MySQLiteHelper.CARD_COLNAME_DECK_ID + "=?",
+                new String[]{Long.toString(deckID)},
                 null, null, null);
 
         cursor.moveToFirst();
@@ -200,7 +226,6 @@ public class CardActivity extends AppCompatActivity {
 
         cardDeck = buildDeck(deckID);
         updateCards();
-        //TODO Finish deleteCard once data model is complete
     }
 
     private void editCard(String card, CardTextWrapper wrapper) {
@@ -230,6 +255,30 @@ public class CardActivity extends AppCompatActivity {
 
         cardDeck.flip((int) cardPos);
         updateCards();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_card, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_shuffle) {
+            cardDeck.shuffle();
+            updateCards();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
 }

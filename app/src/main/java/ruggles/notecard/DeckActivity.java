@@ -35,7 +35,7 @@ public class DeckActivity extends AppCompatActivity {
     private SQLiteDatabase myDB;
     private MySQLiteHelper myDBHelper;
 
-    private ArrayList<String> placeholderDeck;
+    private ArrayList<String> deckArchive;
     private ListView deckList;
 
     @Override
@@ -62,7 +62,7 @@ public class DeckActivity extends AppCompatActivity {
         deckList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                toCardActivity(id);
+                toCardActivity(getDeckID(id));
             }
         });
 
@@ -70,7 +70,7 @@ public class DeckActivity extends AppCompatActivity {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 
-                deckEditMenu(id);
+                deckEditMenu(getDeckID(id));
 
                 //Returning true means the long click consumes the event
                 //Such that a regular click wont be triggered immediately after
@@ -89,6 +89,7 @@ public class DeckActivity extends AppCompatActivity {
         });
 
         Log.d(TAG, "Deck onCreate finished successfully");
+        Log.d(TAG, Integer.toString(getDeckID(0)));
 
 
     }
@@ -97,8 +98,21 @@ public class DeckActivity extends AppCompatActivity {
     public void toCardActivity(long deckID){
         Intent cardIntent = new Intent(this, CardActivity.class);
         cardIntent.putExtra(MySQLiteHelper.DECK_COLNAME_ID, deckID);
-        // TODO INSERT CODE ALLOWING ACTIVITY TO RECIEVE EXTRA
         startActivity(cardIntent);
+    }
+
+    private int getDeckID(long deckPos) {
+
+        Cursor myCursor = myDB.query(MySQLiteHelper.DECK_TABLE_NAME,
+                new String[] {MySQLiteHelper.DECK_COLNAME_ID},
+                MySQLiteHelper.DECK_COLNAME_DECKNAME + "=?",
+                new String[] {deckArchive.get((int) deckPos)}, null, null, null);
+
+        myCursor.moveToFirst();
+        int deckID = myCursor.getInt(0);
+        //Log.d(TAG, myCursor.getString(0));
+
+        return deckID;
     }
 
     // LAYOUT FUNCTIONS DICTATING POP UP MENUS
@@ -191,8 +205,9 @@ public class DeckActivity extends AppCompatActivity {
     }
 
     private void updateDecks() {
+        deckArchive = getDeckList();
         deckList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
-                getDeckList()));
+                deckArchive));
     }
 
     private void addDeck(DeckTextWrapper wrapper) {
@@ -263,11 +278,8 @@ public class DeckActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
+
+        //TODO TURN THIS INTO SEARCH MAYHAPS?
     }
 }
