@@ -18,6 +18,8 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
     public static final String DECK_COLNAME_DECKNAME = "deck_name";
     public static final String[] DECK_COLUMNS =
             new String[]{DECK_COLNAME_ID, DECK_COLNAME_DECKNAME};
+    public static final int DECK_COLNUM_ID = 0;
+    public static final int DECK_COLNUM_NAME = 1;
 
     public static final String CARD_TABLE_NAME = "card_table";
     public static final String CARD_COLNAME_ID = "_id";
@@ -42,22 +44,26 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
                     CARD_COLNAME_FRONT + " varchar(30), " +
                     CARD_COLNAME_BACK + " varchar(120))";
 
-    private static final String TEST_DECK_INSERT =
+    private static final String PLACEHOLDER_DECK =
             "insert into " + DECK_TABLE_NAME + " (" +
                     DECK_COLNAME_DECKNAME + ") " +
-                    "values ('Deck1')";
+                    "values ('Programming Terms')";
 
-    private static final String TEST_DECK_INSERT2 =
-            "insert into " + DECK_TABLE_NAME + " (" +
-                    DECK_COLNAME_DECKNAME + ") " +
-                    "values ('Deck2')";
-
-    private static final String TEST_CARD_INSERT =
+    private static final String PLACEHOLDER_CARD1 =
             "insert into " + CARD_TABLE_NAME + " (" +
                     CARD_COLNAME_DECK_ID + ", " +
                     CARD_COLNAME_FRONT + ", " +
                     CARD_COLNAME_BACK + ") " +
-                    "values ( 1, 'hello this is front', 'hello this is back')";
+                    "values ( 1, 'Invariant', " +
+                    "'A condition which is always true during some portion of a program')";
+
+    private static final String PLACEHOLDER_CARD2 =
+            "insert into " + CARD_TABLE_NAME + " (" +
+                    CARD_COLNAME_DECK_ID + ", " +
+                    CARD_COLNAME_FRONT + ", " +
+                    CARD_COLNAME_BACK + ") " +
+                    "values ( 1, 'Class', " +
+                    "'A template for creating objects')";
 
 
     public MySQLiteHelper(Context context) {
@@ -70,9 +76,9 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
         //TODO Fill in SQLite Helper onCreate
         db.execSQL(CREATE_DECK_TABLE);
         db.execSQL(CREATE_CARD_TABLE);
-        db.execSQL(TEST_DECK_INSERT);
-        db.execSQL(TEST_DECK_INSERT2);
-        db.execSQL(TEST_CARD_INSERT);
+        db.execSQL(PLACEHOLDER_DECK);
+        db.execSQL(PLACEHOLDER_CARD1);
+        db.execSQL(PLACEHOLDER_CARD2);
     }
 
     @Override

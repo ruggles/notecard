@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
@@ -18,59 +17,57 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class DeckActivity extends AppCompatActivity {
 
     // LOGGING JUNK
     private static final String TAG = DeckActivity.class.getSimpleName();
-    private final boolean debugDB = false;
 
     private SQLiteDatabase myDB;
     private MySQLiteHelper myDBHelper;
 
-    private ArrayList<String> deckArchive;
-    private ListView deckList;
+    private ListView deckListView;
+    private DeckGroup myDecks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         // To debug, deletes database
-        if (debugDB)
-            getApplicationContext().deleteDatabase(MySQLiteHelper.DBFILENAME);
+        // getApplicationContext().deleteDatabase(MySQLiteHelper.DBFILENAME);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_deck);
 
         myDBHelper = new MySQLiteHelper(this);
         myDB = myDBHelper.getWritableDatabase();
-        Log.d(TAG, myDB.toString());
+        if (BuildConfig.DEBUG)
+            Log.d(TAG, myDB.toString());
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         // Create main adaptor
-        deckList = (ListView) findViewById(R.id.deck_list);
+        deckListView = (ListView) findViewById(R.id.deck_list);
+        myDecks = new DeckGroup();
         updateDecks();
 
-        deckList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        deckListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                toCardActivity(getDeckID(id));
+                toCardActivity((int) id);
             }
         });
 
-        deckList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+        deckListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 
-                deckEditMenu(getDeckID(id));
+                deckEditMenu(id);
 
                 //Returning true means the long click consumes the event
                 //Such that a regular click wont be triggered immediately after
@@ -88,34 +85,24 @@ public class DeckActivity extends AppCompatActivity {
             }
         });
 
-        Log.d(TAG, "Deck onCreate finished successfully");
-        Log.d(TAG, Integer.toString(getDeckID(0)));
+        if (BuildConfig.DEBUG)
+            Log.d(TAG, "Deck onCreate finished successfully");
 
 
     }
 
-
-    public void toCardActivity(long deckID){
+    // SENDS APPLICATION TO CARDACTIVITY
+    public void toCardActivity(int id){
+        // TODO FIX UP CARD ACTIVITY SO WE CAN SEND OVER DECKNAME & ID
+        long deckID = myDecks.getID(id);
+        String deckName = myDecks.getInfoObject(id).getName();
         Intent cardIntent = new Intent(this, CardActivity.class);
         cardIntent.putExtra(MySQLiteHelper.DECK_COLNAME_ID, deckID);
+        cardIntent.putExtra(MySQLiteHelper.DECK_COLNAME_DECKNAME, deckName);
         startActivity(cardIntent);
     }
 
-    private int getDeckID(long deckPos) {
-
-        Cursor myCursor = myDB.query(MySQLiteHelper.DECK_TABLE_NAME,
-                new String[] {MySQLiteHelper.DECK_COLNAME_ID},
-                MySQLiteHelper.DECK_COLNAME_DECKNAME + "=?",
-                new String[] {deckArchive.get((int) deckPos)}, null, null, null);
-
-        myCursor.moveToFirst();
-        int deckID = myCursor.getInt(0);
-        //Log.d(TAG, myCursor.getString(0));
-
-        return deckID;
-    }
-
-    // LAYOUT FUNCTIONS DICTATING POP UP MENUS
+    // POP UP MENU FUNCTIONS
 
     private void deckAddMenu() {
 
@@ -147,8 +134,7 @@ public class DeckActivity extends AppCompatActivity {
 
         LayoutInflater myInflater = LayoutInflater.from(this);
         View dialogView = myInflater.inflate(R.layout.menu_deck_edit, null);
-        ArrayList<String> deckList = getDeckList();
-        final String deckName = deckList.get((int)id);
+        final String deckName = myDecks.getDeckList()[(int) id];
         final DeckTextWrapper wrapper = new DeckTextWrapper(dialogView);
 
         new AlertDialog.Builder(this)
@@ -177,42 +163,30 @@ public class DeckActivity extends AppCompatActivity {
                 .show();
     }
 
-    // DECK MODIFICATION FUNCTIONs - DATABASE STUFF HAPPENING HERE.
-
-    public ArrayList getDeckList() {
-        ArrayList<String> deckList = new ArrayList<>();
-
-        if (debugDB)
-            Log.d(TAG, "deckList array declared & initialized");
-
-        Cursor cursor = myDB.query(MySQLiteHelper.DECK_TABLE_NAME,
-                MySQLiteHelper.DECK_COLUMNS
-                , null, null, null, null, null);
-
-        if (debugDB)
-            Log.d(TAG, "cursor created");
-
-        cursor.moveToFirst();
-        while (!cursor.isAfterLast()) {
-            String model = cursor.getString(1);
-            deckList.add(model);
-            cursor.moveToNext();
-        }
-
-        cursor.close();
-        return deckList;
-
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_deck, menu);
+        return true;
     }
 
-    private void updateDecks() {
-        deckArchive = getDeckList();
-        deckList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
-                deckArchive));
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        return super.onOptionsItemSelected(item);
+
+        //TODO TURN THIS INTO SEARCH MAYHAPS?
     }
+
+    // DECK MODIFICATION FUNCTIONS
 
     private void addDeck(DeckTextWrapper wrapper) {
 
-        if (duplicateName(wrapper.getName())) {
+        if (myDecks.isNameUsed(wrapper.getName())) {
             Toast.makeText(getApplicationContext(), "Deck has same name as previous deck",
                     Toast.LENGTH_SHORT).show();
             return;
@@ -238,7 +212,7 @@ public class DeckActivity extends AppCompatActivity {
 
     private void renameDeck(String deckName, DeckTextWrapper wrapper) {
 
-        if (duplicateName(wrapper.getName())) {
+        if (myDecks.isNameUsed(wrapper.getName())) {
             Toast.makeText(getApplicationContext(), "Deck has same name as previous deck",
                     Toast.LENGTH_SHORT).show();
             return;
@@ -254,32 +228,43 @@ public class DeckActivity extends AppCompatActivity {
         updateDecks();
     }
 
-    private boolean duplicateName(String newName) {
-        ArrayList<String> deckList = getDeckList();
-        for (int i=0; i< deckList.size(); i++) {
-            if (newName.equals(deckList.get(i))) {
-                return true;
-            }
+    public void updateDecks() {
+        int[] idArray;
+        String[] nameArray;
+
+        if (BuildConfig.DEBUG)
+            Log.d(TAG, "deckListView array declared & initialized");
+
+        Cursor cursor = myDB.query(MySQLiteHelper.DECK_TABLE_NAME,
+                MySQLiteHelper.DECK_COLUMNS
+                , null, null, null, null, null);
+
+        if (BuildConfig.DEBUG)
+            Log.d(TAG, "Cursor created in getDeckList()");
+
+        // getCount gives the amount of rows in the cursor object
+        idArray = new int[cursor.getCount()];
+        nameArray = new String[cursor.getCount()];
+
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            int ID = cursor.getInt(MySQLiteHelper.DECK_COLNUM_ID);
+            idArray[cursor.getPosition()] = ID;
+
+            String name = cursor.getString(MySQLiteHelper.DECK_COLNUM_NAME);
+            nameArray[cursor.getPosition()] = name;
+
+            cursor.moveToNext();
         }
-        return false;
+
+        cursor.close();
+
+        myDecks.update(idArray, nameArray);
+
+        deckListView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
+                myDecks.getDeckList()));
+
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_deck, menu);
-        return true;
-    }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        return super.onOptionsItemSelected(item);
-
-        //TODO TURN THIS INTO SEARCH MAYHAPS?
-    }
 }

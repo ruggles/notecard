@@ -34,6 +34,7 @@ public class CardActivity extends AppCompatActivity {
     private ListView cardList;
     private Deck cardDeck;
     private long deckID;
+    private String deckName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,10 +46,11 @@ public class CardActivity extends AppCompatActivity {
         //Log.d(TAG, myDB.toString());
 
         deckID = getIntent().getExtras().getLong(MySQLiteHelper.DECK_COLNAME_ID);
+        deckName = getIntent().getExtras().getString(MySQLiteHelper.DECK_COLNAME_DECKNAME);
         //Log.d(TAG, Long.toString(deckID));
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitle(getDeckName(deckID));
+        toolbar.setTitle(deckName);
         setSupportActionBar(toolbar);
 
 
@@ -86,7 +88,6 @@ public class CardActivity extends AppCompatActivity {
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        Log.d(TAG, getDeckName(deckID));
         Log.d(TAG, Long.toString(deckID));
     }
 
@@ -153,22 +154,6 @@ public class CardActivity extends AppCompatActivity {
     private void updateCards() {
         cardList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
                 cardDeck.getCards()));
-    }
-
-    private String getDeckName(long deckID) {
-        String deckName;
-
-        Cursor myCursor = myDB.query(MySQLiteHelper.DECK_TABLE_NAME,
-                new String[] {MySQLiteHelper.DECK_COLNAME_DECKNAME},
-                MySQLiteHelper.DECK_COLNAME_ID + "=?",
-                new String[] {Long.toString(deckID)},
-                null, null, null);
-
-        myCursor.moveToFirst();
-
-        deckName = myCursor.getString(0);
-
-        return deckName;
     }
 
     private Deck buildDeck(long deckID) {

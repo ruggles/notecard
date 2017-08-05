@@ -42,7 +42,6 @@ public class Deck {
 
     void shuffle()
     {
-        //TODO IMPLEMENT CARD SHUFFLING
         long seed = System.nanoTime();
         ArrayList<String> frontList = new ArrayList<>(Arrays.asList(cardFront));
         Collections.shuffle(frontList, new Random(seed));
