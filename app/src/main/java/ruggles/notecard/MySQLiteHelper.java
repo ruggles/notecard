@@ -68,12 +68,10 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 
     public MySQLiteHelper(Context context) {
         super(context, DBFILENAME, null, DBVERSION);
-        //TODO Fill in SQLite Helper Constructor
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        //TODO Fill in SQLite Helper onCreate
         db.execSQL(CREATE_DECK_TABLE);
         db.execSQL(CREATE_CARD_TABLE);
         db.execSQL(PLACEHOLDER_DECK);
@@ -83,6 +81,5 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        //TODO Fill in SQLite Helper onUpgrade
     }
 }

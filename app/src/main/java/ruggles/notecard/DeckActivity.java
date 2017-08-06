@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -15,8 +16,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 import android.util.Log;
@@ -93,7 +96,6 @@ public class DeckActivity extends AppCompatActivity {
 
     // SENDS APPLICATION TO CARDACTIVITY
     public void toCardActivity(int id){
-        // TODO FIX UP CARD ACTIVITY SO WE CAN SEND OVER DECKNAME & ID
         long deckID = myDecks.getID(id);
         String deckName = myDecks.getInfoObject(id).getName();
         Intent cardIntent = new Intent(this, CardActivity.class);
@@ -110,7 +112,7 @@ public class DeckActivity extends AppCompatActivity {
         View dialogView = myInflater.inflate(R.layout.menu_deck_edit, null);
         final DeckTextWrapper deckEditWrapper = new DeckTextWrapper(dialogView);
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog  = new AlertDialog.Builder(this)
                 .setTitle("Add Deck")
                 .setView(dialogView)
                 .setPositiveButton("Add", new Dialog.OnClickListener() {
@@ -125,8 +127,13 @@ public class DeckActivity extends AppCompatActivity {
                         //
                     }
                 })
-                .show();
+                .create();
 
+        // This automatically creates keyboard, makes things a little faster
+        if (getResources().getConfiguration().keyboard == Configuration.KEYBOARD_NOKEYS )
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+
+        dialog.show();
 
     }
 
@@ -134,8 +141,11 @@ public class DeckActivity extends AppCompatActivity {
 
         LayoutInflater myInflater = LayoutInflater.from(this);
         View dialogView = myInflater.inflate(R.layout.menu_deck_edit, null);
-        final String deckName = myDecks.getDeckList()[(int) id];
+        EditText textField = (EditText) dialogView.findViewById(R.id.deckName);
         final DeckTextWrapper wrapper = new DeckTextWrapper(dialogView);
+
+        final String deckName = myDecks.getDeckList()[(int) id];
+        textField.setText(deckName);
 
         new AlertDialog.Builder(this)
                 .setTitle("Rename Deck?")

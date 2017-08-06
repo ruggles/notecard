@@ -3,6 +3,7 @@ package ruggles.notecard;
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.DialogInterface;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
@@ -15,16 +16,17 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 
 public class CardActivity extends AppCompatActivity {
-
-    private String[] placeholderCards = {"Alpha", "Omega", "Theta"};
 
     private static final String TAG = CardActivity.class.getSimpleName();
 
@@ -72,7 +74,7 @@ public class CardActivity extends AppCompatActivity {
 
         cardList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
-            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id){
 
                 editCardMenu(id);
                 return true;
@@ -88,7 +90,8 @@ public class CardActivity extends AppCompatActivity {
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        Log.d(TAG, Long.toString(deckID));
+        if (BuildConfig.DEBUG)
+            Log.d(TAG, Long.toString(deckID));
     }
 
     //
@@ -99,7 +102,7 @@ public class CardActivity extends AppCompatActivity {
         View dialogView = myInflater.inflate(R.layout.menu_card_edit, null);
         final CardTextWrapper wrapper = new CardTextWrapper(dialogView);
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Add Card")
                 .setView(dialogView)
                 .setPositiveButton("Add", new Dialog.OnClickListener() {
@@ -114,7 +117,13 @@ public class CardActivity extends AppCompatActivity {
                         //
                     }
                 })
-                .show();
+                .create();
+
+        // This automatically creates keyboard, makes things a little faster
+        if (getResources().getConfiguration().keyboard == Configuration.KEYBOARD_NOKEYS )
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+
+        dialog.show();
 
     }
 
@@ -123,7 +132,13 @@ public class CardActivity extends AppCompatActivity {
         LayoutInflater myInflater = LayoutInflater.from(this);
         View dialogView = myInflater.inflate(R.layout.menu_card_edit, null);
         final CardTextWrapper wrapper = new CardTextWrapper(dialogView);
-        final String cardName = cardDeck.getcardFront(id);
+        final String cardName = cardDeck.getCardFront(id);
+        final String cardBack = cardDeck.getCardBack(id);
+
+        EditText frontField = (EditText) dialogView.findViewById(R.id.frontEdit);
+        frontField.setText(cardName);
+        EditText backField = (EditText) dialogView.findViewById(R.id.backEdit);
+        backField.setText(cardBack);
 
         new AlertDialog.Builder(this)
                 .setTitle("Edit Card")

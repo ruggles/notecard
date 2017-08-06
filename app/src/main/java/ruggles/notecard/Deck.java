@@ -16,13 +16,14 @@ import java.util.Random;
 
 public class Deck {
 
-    private String[] cardFront, cardBack, frontArchive;
+    private String[] cardFront, cardBack, frontArchive, backArchive;
 
     Deck(String[] cardFront, String[] cardBack)
     {
         this.cardFront = cardFront;
         this.frontArchive = cardFront;
         this.cardBack = cardBack;
+        this.backArchive = cardBack;
     }
 
     void flip(int cardPos)
@@ -56,7 +57,11 @@ public class Deck {
         return cardFront;
     }
 
-    String getcardFront(long id) {
+    String getCardFront(long id) {
         return frontArchive[(int) id];
+    }
+
+    String getCardBack(long id) {
+        return backArchive[(int) id];
     }
 }
