@@ -1,5 +1,6 @@
 package ruggles.notecard;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -9,6 +10,8 @@ import android.database.sqlite.SQLiteOpenHelper;
  */
 
 public class MySQLiteHelper extends SQLiteOpenHelper {
+
+    private static MySQLiteHelper instance = null;
 
     public static final String DBFILENAME = "deck.db";
     private static final int DBVERSION = 1;
@@ -66,7 +69,16 @@ public class MySQLiteHelper extends SQLiteOpenHelper {
                     "'A template for creating objects')";
 
 
-    public MySQLiteHelper(Context context) {
+    // todo finish migrating MySQLiteHelper over to singleton
+    public static MySQLiteHelper getInstance (Context ctx) {
+        if (instance == null) {
+            instance = new MySQLiteHelper(ctx.getApplicationContext());
+        }
+
+        return instance;
+    }
+
+    private MySQLiteHelper(Context context) {
         super(context, DBFILENAME, null, DBVERSION);
     }
 

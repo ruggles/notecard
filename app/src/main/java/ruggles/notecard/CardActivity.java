@@ -44,7 +44,7 @@ public class CardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_card);
 
-        myDBHelper = new MySQLiteHelper(this);
+        myDBHelper = MySQLiteHelper.getInstance(this);
         myDB = myDBHelper.getWritableDatabase();
         //Log.d(TAG, myDB.toString());
 
