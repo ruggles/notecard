@@ -1,5 +1,7 @@
 package ruggles.notecard;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,9 +23,12 @@ public class Deck {
     Deck(String[] cardFront, String[] cardBack)
     {
         this.cardFront = cardFront;
-        this.frontArchive = cardFront;
+        this.frontArchive = cardFront.clone();
+
+        //Be wary, if two variables copy the same parameter, it will be the same reference!
+
         this.cardBack = cardBack;
-        this.backArchive = cardBack;
+        this.backArchive = cardBack.clone();
     }
 
     void flip(int cardPos)
@@ -58,6 +63,7 @@ public class Deck {
     }
 
     String getCardFront(long id) {
+        Log.d("Deck", Arrays.toString(frontArchive));
         return frontArchive[(int) id];
     }
 

@@ -110,7 +110,7 @@ public class DeckActivity extends AppCompatActivity {
 
         LayoutInflater myInflater = LayoutInflater.from(this);
         View dialogView = myInflater.inflate(R.layout.menu_deck_edit, null);
-        final DeckTextWrapper deckEditWrapper = new DeckTextWrapper(dialogView);
+        final EditTextWrapper wrapper = new EditTextWrapper(dialogView, R.id.deckName);
 
         AlertDialog dialog  = new AlertDialog.Builder(this)
                 .setTitle("Add Deck")
@@ -118,7 +118,7 @@ public class DeckActivity extends AppCompatActivity {
                 .setPositiveButton("Add", new Dialog.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        addDeck(deckEditWrapper);
+                        addDeck(wrapper);
                     }
                 })
                 .setNeutralButton("Cancel", new Dialog.OnClickListener() {
@@ -142,10 +142,10 @@ public class DeckActivity extends AppCompatActivity {
         LayoutInflater myInflater = LayoutInflater.from(this);
         View dialogView = myInflater.inflate(R.layout.menu_deck_edit, null);
         EditText textField = (EditText) dialogView.findViewById(R.id.deckName);
-        final DeckTextWrapper wrapper = new DeckTextWrapper(dialogView);
 
         final String deckName = myDecks.getDeckList()[(int) id];
         textField.setText(deckName);
+        final EditTextWrapper wrapper = new EditTextWrapper(dialogView, R.id.deckName);
 
         new AlertDialog.Builder(this)
                 .setTitle("Rename Deck?")
@@ -194,9 +194,9 @@ public class DeckActivity extends AppCompatActivity {
 
     // DECK MODIFICATION FUNCTIONS
 
-    private void addDeck(DeckTextWrapper wrapper) {
+    private void addDeck(EditTextWrapper wrapper) {
 
-        if (myDecks.isNameUsed(wrapper.getName())) {
+        if (myDecks.isNameUsed(wrapper.getText())) {
             Toast.makeText(getApplicationContext(), "Deck has same name as previous deck",
                     Toast.LENGTH_SHORT).show();
             return;
@@ -204,7 +204,7 @@ public class DeckActivity extends AppCompatActivity {
 
         ContentValues myValues = new ContentValues(1);
 
-        myValues.put(MySQLiteHelper.DECK_COLNAME_DECKNAME, wrapper.getName());
+        myValues.put(MySQLiteHelper.DECK_COLNAME_DECKNAME, wrapper.getText());
 
         myDB.insert(MySQLiteHelper.DECK_TABLE_NAME, MySQLiteHelper.DECK_COLNAME_ID, myValues);
 
@@ -220,9 +220,9 @@ public class DeckActivity extends AppCompatActivity {
         updateDecks();
     }
 
-    private void renameDeck(String deckName, DeckTextWrapper wrapper) {
+    private void renameDeck(String deckName, EditTextWrapper wrapper) {
 
-        if (myDecks.isNameUsed(wrapper.getName())) {
+        if (myDecks.isNameUsed(wrapper.getText())) {
             Toast.makeText(getApplicationContext(), "Deck has same name as previous deck",
                     Toast.LENGTH_SHORT).show();
             return;
@@ -230,7 +230,7 @@ public class DeckActivity extends AppCompatActivity {
 
         ContentValues myValues = new ContentValues(1);
 
-        myValues.put(MySQLiteHelper.DECK_COLNAME_DECKNAME, wrapper.getName());
+        myValues.put(MySQLiteHelper.DECK_COLNAME_DECKNAME, wrapper.getText());
 
         myDB.update(MySQLiteHelper.DECK_TABLE_NAME, myValues,
                 MySQLiteHelper.DECK_COLNAME_DECKNAME + "=?", new String[]{deckName});

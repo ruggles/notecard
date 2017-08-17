@@ -27,7 +27,7 @@
             android:inputType="textCapSentences"
             android:layout_marginRight="24dp"
             android:text=""
-            android:maxLength="30"/>
+            android:maxLength="40"/>
     </LinearLayout>
 
 </LinearLayout>

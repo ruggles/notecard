@@ -6,6 +6,7 @@ import android.content.DialogInterface;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
@@ -94,13 +95,14 @@ public class CardActivity extends AppCompatActivity {
             Log.d(TAG, Long.toString(deckID));
     }
 
-    //
+    // Menu Functions
 
     private void addCardMenu() {
 
         LayoutInflater myInflater = LayoutInflater.from(this);
         View dialogView = myInflater.inflate(R.layout.menu_card_edit, null);
-        final CardTextWrapper wrapper = new CardTextWrapper(dialogView);
+        final EditTextWrapper frontWrapper = new EditTextWrapper(dialogView, R.id.frontEdit);
+        final EditTextWrapper backWrapper = new EditTextWrapper(dialogView, R.id.backEdit);
 
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Add Card")
@@ -108,7 +110,7 @@ public class CardActivity extends AppCompatActivity {
                 .setPositiveButton("Add", new Dialog.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        addCard(wrapper);
+                        addCard(frontWrapper, backWrapper);
                     }
                 })
                 .setNeutralButton("Cancel", new Dialog.OnClickListener() {
@@ -131,14 +133,22 @@ public class CardActivity extends AppCompatActivity {
 
         LayoutInflater myInflater = LayoutInflater.from(this);
         View dialogView = myInflater.inflate(R.layout.menu_card_edit, null);
-        final CardTextWrapper wrapper = new CardTextWrapper(dialogView);
+
         final String cardName = cardDeck.getCardFront(id);
         final String cardBack = cardDeck.getCardBack(id);
+
+        if (BuildConfig.DEBUG) {
+            Log.d(TAG, cardName);
+            Log.d(TAG, cardBack);
+        }
 
         EditText frontField = (EditText) dialogView.findViewById(R.id.frontEdit);
         frontField.setText(cardName);
         EditText backField = (EditText) dialogView.findViewById(R.id.backEdit);
         backField.setText(cardBack);
+
+        final EditTextWrapper frontWrapper = new EditTextWrapper(dialogView, R.id.frontEdit);
+        final EditTextWrapper backWrapper = new EditTextWrapper(dialogView, R.id.backEdit);
 
         new AlertDialog.Builder(this)
                 .setTitle("Edit Card")
@@ -160,11 +170,70 @@ public class CardActivity extends AppCompatActivity {
                 .setNegativeButton("Modify", new Dialog.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        editCard(cardName, wrapper);
+                        editCard(cardName, frontWrapper, backWrapper);
                     }
                 })
                 .show();
     }
+
+    // Card changing functions
+
+    private void addCard(EditTextWrapper frontWrapper, EditTextWrapper backWrapper) {
+
+        String front = frontWrapper.getText();
+        String back = backWrapper.getText();
+
+        if (cardDeck.doesExist(front)) {
+            Toast.makeText(getApplicationContext(), "Card already exists", Toast.LENGTH_SHORT)
+                        .show();
+            return;
+        }
+
+        ContentValues myValues = new ContentValues(3);
+
+        myValues.put(MySQLiteHelper.CARD_COLNAME_DECK_ID, Long.toString(deckID));
+        myValues.put(MySQLiteHelper.CARD_COLNAME_FRONT, front);
+        myValues.put(MySQLiteHelper.CARD_COLNAME_BACK, back);
+
+        myDB.insert(MySQLiteHelper.CARD_TABLE_NAME, MySQLiteHelper.CARD_COLNAME_ID, myValues);
+
+        cardDeck = buildDeck(deckID);
+        updateCards();
+    }
+
+    private void deleteCard(String card) {
+
+        myDB.delete(MySQLiteHelper.CARD_TABLE_NAME, MySQLiteHelper.CARD_COLNAME_FRONT + "=?",
+                new String[]{card});
+
+        cardDeck = buildDeck(deckID);
+        updateCards();
+    }
+
+    private void editCard(String card, EditTextWrapper frontWrapper, EditTextWrapper backWrapper) {
+
+        String front = frontWrapper.getText();
+        String back = backWrapper.getText();
+
+        if ((!card.equals(front)) && cardDeck.doesExist(front)) {
+            Toast.makeText(getApplicationContext(), "Card already exists", Toast.LENGTH_SHORT)
+                    .show();
+            return;
+        }
+
+        ContentValues myValues = new ContentValues(2);
+        myValues.put(MySQLiteHelper.CARD_COLNAME_FRONT, front);
+        myValues.put(MySQLiteHelper.CARD_COLNAME_BACK, back);
+
+        myDB.update(MySQLiteHelper.CARD_TABLE_NAME, myValues,
+                MySQLiteHelper.CARD_COLNAME_FRONT + "=?",
+                new String[] {card});
+
+        cardDeck = buildDeck(deckID);
+        updateCards();
+    }
+
+    // Misc deck functions
 
     private void updateCards() {
         cardList.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,
@@ -194,61 +263,6 @@ public class CardActivity extends AppCompatActivity {
 
         return new Deck(cardFronts.toArray(new String[cardFronts.size()]),
                 cardBacks.toArray(new String[cardBacks.size()]));
-    }
-
-    private void addCard(CardTextWrapper wrapper) {
-
-        String front = wrapper.getFront();
-        String back = wrapper.getBack();
-
-        if (cardDeck.doesExist(front)) {
-            Toast.makeText(getApplicationContext(), "Card already exists", Toast.LENGTH_SHORT)
-                        .show();
-            return;
-        }
-
-        ContentValues myValues = new ContentValues(3);
-
-        myValues.put(MySQLiteHelper.CARD_COLNAME_DECK_ID, Long.toString(deckID));
-        myValues.put(MySQLiteHelper.CARD_COLNAME_FRONT, front);
-        myValues.put(MySQLiteHelper.CARD_COLNAME_BACK, back);
-
-        myDB.insert(MySQLiteHelper.CARD_TABLE_NAME, MySQLiteHelper.CARD_COLNAME_ID, myValues);
-
-        cardDeck = buildDeck(deckID);
-        updateCards();
-    }
-
-    private void deleteCard(String card) {
-
-        myDB.delete(MySQLiteHelper.CARD_TABLE_NAME, MySQLiteHelper.CARD_COLNAME_FRONT + "=?",
-                new String[]{card});
-
-        cardDeck = buildDeck(deckID);
-        updateCards();
-    }
-
-    private void editCard(String card, CardTextWrapper wrapper) {
-
-        String front = wrapper.getFront();
-        String back = wrapper.getBack();
-
-        if ((!card.equals(front)) && cardDeck.doesExist(front)) {
-            Toast.makeText(getApplicationContext(), "Card already exists", Toast.LENGTH_SHORT)
-                    .show();
-            return;
-        }
-
-        ContentValues myValues = new ContentValues(2);
-        myValues.put(MySQLiteHelper.CARD_COLNAME_FRONT, front);
-        myValues.put(MySQLiteHelper.CARD_COLNAME_BACK, back);
-
-        myDB.update(MySQLiteHelper.CARD_TABLE_NAME, myValues,
-                MySQLiteHelper.CARD_COLNAME_FRONT + "=?",
-                new String[] {card});
-
-        cardDeck = buildDeck(deckID);
-        updateCards();
     }
 
     private void flipCard(long cardPos) {
